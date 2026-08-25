@@ -41,7 +41,10 @@ export function Chatbot() {
     setTyping(true);
     setTimeout(() => {
       const pool = replies[lang];
-      setMsgs((m) => [...m, { from: "bot", text: pool[m.length % pool.length] }]);
+      setMsgs((m) => {
+        const reply = pool[m.length % pool.length] ?? "How can I help with your booking?";
+        return [...m, { from: "bot", text: reply }];
+      });
       setTyping(false);
     }, 900);
   };
