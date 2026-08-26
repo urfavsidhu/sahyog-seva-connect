@@ -146,11 +146,11 @@ Use realistic mock/dummy data throughout (sample workers with names, ratings, pr
 
 ## Development
 
-You need Node.js/Bun installed.
+You need Node.js installed.
 
-```sh
+\`\`\`sh
 git clone <this-repository-url>
 cd <repository-name>
-bun install
-bun run dev
-```
+npm install
+npm run dev
+\`\`\`
