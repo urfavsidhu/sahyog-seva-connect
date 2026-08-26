@@ -37,6 +37,17 @@ export const getWorker = async (id: string) => {
   return list.find((w) => w.id === id) ?? null;
 };
 
+// Demo session: the "logged in" worker for all /pro/* screens.
+export const CURRENT_WORKER_ID = "w1";
+export const getCurrentWorker = async () => {
+  const list = await getWorkers();
+  return list.find((w) => w.id === CURRENT_WORKER_ID) ?? list[0] ?? null;
+};
+export const getWorkerBookings = async () => {
+  const list = await getBookings();
+  return list.filter((b) => b.workerId === CURRENT_WORKER_ID);
+};
+
 export const searchWorkers = async (params: {
   q?: string;
   category?: string;
