@@ -171,7 +171,7 @@ function ProfilePage() {
                 <img
                   src={`https://i.pravatar.cc/240?u=${user.id}`}
                   alt={user.name}
-                  className="h-20 w-20 shrink-0 rounded-2xl border-4 border-card object-cover shadow-pop"
+                  className="h-20 w-20 shrink-0 rounded-2xl border-4 border-card bg-secondary object-cover object-top shadow-pop"
                 />
                 {!editing && (
                   <Button variant="outline" size="sm" onClick={startEdit}>
