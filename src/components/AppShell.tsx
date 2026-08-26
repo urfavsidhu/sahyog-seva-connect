@@ -131,7 +131,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="min-h-screen bg-background pb-48 lg:pb-0">
       {/* top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur">
         <div className="flex h-16 w-full items-center gap-3 px-4 lg:px-8">
