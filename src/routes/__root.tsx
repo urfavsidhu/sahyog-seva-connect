@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -126,16 +127,25 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const NO_SHELL_ROUTES = ["/login", "/signup"];
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAuthRoute = NO_SHELL_ROUTES.includes(pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AppStoreProvider>
-        <AppShell>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        {isAuthRoute ? (
+          // Login / signup render full-screen, without the header/sidebar/bottom nav.
           <Outlet />
-        </AppShell>
+        ) : (
+          <AppShell>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </AppShell>
+        )}
       </AppStoreProvider>
     </QueryClientProvider>
   );
