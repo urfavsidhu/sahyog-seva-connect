@@ -12,4 +12,13 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Hard-pin the build target to Vercel. Without this, nitro's zero-config
+  // auto-detection can fall back to the "cloudflare-module" default when the
+  // build doesn't run inside Vercel's own build environment (or Vercel's
+  // project settings don't line up with it), which produces JS chunk paths
+  // that don't match what gets served — causing 404s on asset files like
+  // `/assets/_id-*.js` and the app getting stuck on its initial loading state.
+  nitro: {
+    preset: "vercel",
+  },
 });
