@@ -134,7 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       {/* top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 lg:px-8">
+        <div className="flex h-16 w-full items-center gap-3 px-4 lg:px-8">
           <button
             className="tap tap-active rounded-lg p-2 hover:bg-secondary lg:hidden"
             aria-label="Open menu"
@@ -188,7 +188,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-[1440px]">
+      <div className="flex w-full">
         {/* desktop sidebar */}
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-border px-3 py-5 lg:block">
           <p className="px-3 pb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
