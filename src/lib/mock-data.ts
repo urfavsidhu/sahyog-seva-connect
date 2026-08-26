@@ -25,7 +25,7 @@ export const categories: ServiceCategory[] = [
 
 const AVATAR_COLORS = "0d9488,f59e0b,0ea5e9,dc2626,7c3aed,059669";
 const photo = (seed: string) =>
-  `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${AVATAR_COLORS}&fontFamily=Plus%20Jakarta%20Sans&fontWeight=700`;
+  `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${AVATAR_COLORS}`;
 
 export const workers: Worker[] = [
   {
