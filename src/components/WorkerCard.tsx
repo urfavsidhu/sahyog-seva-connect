@@ -1,9 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { BadgeCheck, MapPin, Zap } from "lucide-react";
 import { Badge, Button, Card, Stars, inr } from "./kit";
+import { useApp } from "@/lib/app-store";
 import type { Worker } from "@/lib/types";
 
 export function WorkerCard({ worker }: { worker: Worker }) {
+  const { isAuthenticated } = useApp();
   return (
     <Card className="flex gap-3">
       <img
@@ -52,11 +54,19 @@ export function WorkerCard({ worker }: { worker: Worker }) {
               View
             </Button>
           </Link>
-          <Link to="/book/$id" params={{ id: worker.id }} className="flex-1">
-            <Button size="sm" full>
-              Book
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/book/$id" params={{ id: worker.id }} className="flex-1">
+              <Button size="sm" full>
+                Book
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/login" className="flex-1">
+              <Button size="sm" full>
+                Book
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </Card>
