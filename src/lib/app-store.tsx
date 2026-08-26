@@ -30,6 +30,9 @@ interface Store {
   t: (key: keyof typeof dict | string) => string;
   unread: number;
   markAllRead: () => void;
+  isAuthenticated: boolean;
+  login: () => void;
+  logout: () => void;
 }
 
 const AppStoreContext = createContext<Store | null>(null);
@@ -38,12 +41,15 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [role, setRoleState] = useState<Role>("customer");
   const [lang, setLangState] = useState<Lang>("en");
   const [unread, setUnread] = useState(2);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const r = localStorage.getItem("ss.role") as Role | null;
     const l = localStorage.getItem("ss.lang") as Lang | null;
+    const a = localStorage.getItem("ss.auth");
     if (r) setRoleState(r);
     if (l) setLangState(l);
+    if (a === "1") setIsAuthenticated(true);
   }, []);
 
   const setRole = useCallback((r: Role) => {
@@ -53,6 +59,16 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     localStorage.setItem("ss.lang", l);
+  }, []);
+  const login = useCallback(() => {
+    setIsAuthenticated(true);
+    localStorage.setItem("ss.auth", "1");
+  }, []);
+  const logout = useCallback(() => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("ss.auth");
+    localStorage.removeItem("ss.role");
+    setRoleState("customer");
   }, []);
 
   const value = useMemo<Store>(
@@ -65,8 +81,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       t: (key: string) => dict[key]?.[lang] ?? key,
       unread,
       markAllRead: () => setUnread(0),
+      isAuthenticated,
+      login,
+      logout,
     }),
-    [role, lang, unread, setRole, setLang],
+    [role, lang, unread, isAuthenticated, setRole, setLang, login, logout],
   );
 
   return <AppStoreContext.Provider value={value}>{children}</AppStoreContext.Provider>;
