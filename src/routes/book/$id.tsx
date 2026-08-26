@@ -9,14 +9,17 @@ import {
   Clock,
   Copy,
   Home,
+  LogIn,
   MapPin,
   ShieldCheck,
+  UserPlus,
   Wallet,
   Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { createBooking, getWorker } from "@/api/services";
 import { Button, Card, ErrorState, Loading, Section, Stars, inr, useAsync } from "@/components/kit";
+import { useApp } from "@/lib/app-store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/book/$id")({
@@ -56,6 +59,7 @@ function nextDays(count: number) {
 function BookingPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useApp();
   const worker = useAsync(() => getWorker(id), [id]);
   const days = useMemo(() => nextDays(7), []);
 
@@ -107,6 +111,44 @@ function BookingPage() {
   if (worker.error) return <ErrorState message={worker.error} onRetry={worker.retry} />;
   if (!w) {
     return <ErrorState message="We couldn't find this worker. They may no longer be listed." />;
+  }
+
+  /* ---------- login required ---------- */
+  if (!isAuthenticated) {
+    return (
+      <div className="mx-auto max-w-lg">
+        <Card className="flex flex-col items-center px-6 py-10 text-center">
+          <div className="mb-4 rounded-full bg-primary-soft p-4 text-primary">
+            <LogIn className="h-10 w-10" />
+          </div>
+          <h1 className="text-xl font-bold">Log in to book {w.name.split(" ")[0] ?? w.name}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create a free account or log in to confirm this booking, track your OTP and chat with
+            your worker.
+          </p>
+
+          <div className="mt-6 flex w-full flex-col gap-2 sm:flex-row">
+            <Link to="/login" className="flex-1">
+              <Button full>
+                <LogIn className="h-4 w-4" /> Log in
+              </Button>
+            </Link>
+            <Link to="/signup" className="flex-1">
+              <Button variant="outline" full>
+                <UserPlus className="h-4 w-4" /> Sign up
+              </Button>
+            </Link>
+          </div>
+
+          <button
+            onClick={() => navigate({ to: "/search" })}
+            className="tap tap-active mt-5 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to search
+          </button>
+        </Card>
+      </div>
+    );
   }
 
   /* ---------- success state ---------- */
