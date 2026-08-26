@@ -7,6 +7,8 @@ import {
   IndianRupee,
   LayoutDashboard,
   ListChecks,
+  LogIn,
+  LogOut,
   MapPin,
   Menu,
   MessageSquare,
@@ -122,7 +124,7 @@ function RoleSwitcher({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { role, lang, toggleLang, unread } = useApp();
+  const { role, lang, toggleLang, unread, isAuthenticated, logout } = useApp();
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = NAV[role];
@@ -163,6 +165,26 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
             )}
           </Link>
+
+          {isAuthenticated ? (
+            <button
+              onClick={logout}
+              className="tap tap-active flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold hover:bg-secondary"
+              aria-label="Log out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="tap tap-active flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+              aria-label="Log in"
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              Login
+            </Link>
+          )}
         </div>
       </header>
 
@@ -214,6 +236,25 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
             </div>
             <RoleSwitcher onNavigate={() => setOpen(false)} />
+            {isAuthenticated ? (
+              <button
+                onClick={() => {
+                  logout();
+                  setOpen(false);
+                }}
+                className="tap tap-active flex items-center justify-center gap-2 rounded-xl border border-border px-3 py-2.5 text-sm font-semibold hover:bg-secondary"
+              >
+                <LogOut className="h-4 w-4" /> Log out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setOpen(false)}
+                className="tap tap-active flex items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                <LogIn className="h-4 w-4" /> Login
+              </Link>
+            )}
             <nav className="space-y-1 overflow-y-auto">
               {items.map((i) => (
                 <Link
