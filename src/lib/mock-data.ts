@@ -23,7 +23,9 @@ export const categories: ServiceCategory[] = [
   { id: "gardener", name: "Gardener", nameHi: "माली", icon: "Sprout", basePrice: 279, jobs: 143, active: false },
 ];
 
-const photo = (seed: string) => `https://i.pravatar.cc/240?u=${seed}`;
+const AVATAR_COLORS = "0d9488,f59e0b,0ea5e9,dc2626,7c3aed,059669";
+const photo = (seed: string) =>
+  `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${AVATAR_COLORS}&fontFamily=Plus%20Jakarta%20Sans&fontWeight=700`;
 
 export const workers: Worker[] = [
   {
