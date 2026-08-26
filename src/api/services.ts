@@ -67,6 +67,12 @@ export const getMessages = () => request<Message[]>("/messages", mock.messages);
 export const getMembers = () => request<Member[]>("/coop/members", mock.members);
 export const getCooperatives = () => request<Cooperative[]>("/cooperatives", mock.cooperatives);
 export const getUsers = () => request<AppUser[]>("/users", mock.users);
+export const getCurrentUser = async () => {
+  const list = await getUsers();
+  return list.find((u) => u.id === "u1") ?? list[0] ?? null;
+};
+export const updateProfile = (payload: Partial<AppUser>) =>
+  request<Partial<AppUser>>("/profile", payload);
 export const getTransactions = () => request<Transaction[]>("/transactions", mock.transactions);
 export const getDisputes = () => request<Dispute[]>("/disputes", mock.disputes);
 export const getNotifications = () => request("/notifications", mock.notifications);
