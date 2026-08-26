@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { login } from "@/api/services";
+import { login as apiLogin } from "@/api/services";
 import { AuthCard } from "@/components/AuthCard";
 import { Button } from "@/components/kit";
 import { useApp } from "@/lib/app-store";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { setRole } = useApp();
+  const { setRole, login } = useApp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,8 +32,9 @@ function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await login({ email, password });
+      await apiLogin({ email, password });
       setRole("customer");
+      login();
       navigate({ to: "/" });
     } catch {
       setError("Couldn't log in. Please try again.");
