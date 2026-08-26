@@ -7,11 +7,25 @@ import type {
   Member,
   Message,
   Review,
+  Role,
   ServiceCategory,
   Transaction,
   Worker,
 } from "@/lib/types";
 import { request } from "./client";
+
+/* ---------------- auth ---------------- */
+export const login = (payload: { email: string; password: string }) =>
+  request<{ token: string }>("/auth/login", { token: "mock-jwt-token" });
+
+export const signup = (payload: {
+  name: string;
+  email: string;
+  phone: string;
+  city?: string;
+  password: string;
+  role: Role;
+}) => request<{ token: string }>("/auth/signup", { token: "mock-jwt-token" });
 
 /* ---------------- catalogue ---------------- */
 export const getCategories = () => request<ServiceCategory[]>("/categories", mock.categories);
