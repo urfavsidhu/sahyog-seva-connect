@@ -148,9 +148,9 @@ Use realistic mock/dummy data throughout (sample workers with names, ratings, pr
 
 You need Node.js/Bun installed.
 
-\`\`\`sh
+```sh
 git clone <this-repository-url>
 cd <repository-name>
 bun install
 bun run dev
-\`\`\`
+```
