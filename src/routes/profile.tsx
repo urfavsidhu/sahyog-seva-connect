@@ -169,7 +169,7 @@ function ProfilePage() {
             <div className="-mt-10 px-5 pb-5 sm:px-6 sm:pb-6">
               <div className="flex items-end justify-between gap-3">
                 <img
-                  src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=0d9488,f59e0b,0ea5e9,dc2626,7c3aed,059669&fontFamily=Plus%20Jakarta%20Sans&fontWeight=700`}
+                  src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=0d9488,f59e0b,0ea5e9,dc2626,7c3aed,059669`}
                   alt={user.name}
                   className="h-20 w-20 shrink-0 rounded-2xl border-4 border-card bg-secondary object-cover shadow-pop"
                 />
