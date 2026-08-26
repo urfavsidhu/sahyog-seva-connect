@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Lock, Mail, MapPin, Phone, User } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { signup } from "@/api/services";
+import { signup as apiSignup } from "@/api/services";
 import { AuthCard } from "@/components/AuthCard";
 import { Button } from "@/components/kit";
 import { useApp } from "@/lib/app-store";
@@ -30,7 +30,7 @@ const ROLE_HOME: Record<Role, string> = {
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { setRole } = useApp();
+  const { setRole, login } = useApp();
 
   const [role, setSelectedRole] = useState<Role>("customer");
   const [name, setName] = useState("");
@@ -56,8 +56,9 @@ function SignupPage() {
     setError(null);
     setLoading(true);
     try {
-      await signup({ name, email, phone, city, password, role });
+      await apiSignup({ name, email, phone, city, password, role });
       setRole(role);
+      login();
       navigate({ to: ROLE_HOME[role] });
     } catch {
       setError("Couldn't create your account. Please try again.");
