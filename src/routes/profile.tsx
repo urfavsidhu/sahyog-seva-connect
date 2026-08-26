@@ -6,12 +6,14 @@ import {
   Check,
   IndianRupee,
   ListChecks,
+  LogIn,
   LogOut,
   Mail,
   MapPin,
   Pencil,
   Phone,
   User,
+  UserPlus,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -76,7 +78,7 @@ function Field({
 }
 
 function ProfilePage() {
-  const { lang, toggleLang, unread, markAllRead } = useApp();
+  const { lang, toggleLang, unread, markAllRead, isAuthenticated, logout } = useApp();
   const profile = useAsync(getCurrentUser);
   const bookings = useAsync(getBookings);
 
@@ -120,7 +122,7 @@ function ProfilePage() {
   }
 
   function handleLogout() {
-    localStorage.removeItem("ss.role");
+    logout();
     window.location.href = "/";
   }
 
@@ -128,7 +130,31 @@ function ProfilePage() {
     <div>
       <PageHeader title="Profile" subtitle="Manage your personal details and preferences" />
 
-      {profile.loading ? (
+      {!isAuthenticated ? (
+        <Card className="flex flex-col items-center px-6 py-10 text-center">
+          <div className="mb-4 rounded-full bg-primary-soft p-4 text-primary">
+            <LogIn className="h-10 w-10" />
+          </div>
+          <h1 className="text-xl font-bold">Log in to view your profile</h1>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            Log in or create an account to manage your details, track bookings and update your
+            preferences.
+          </p>
+
+          <div className="mt-6 flex w-full flex-col gap-2 sm:flex-row">
+            <Link to="/login" className="flex-1">
+              <Button full>
+                <LogIn className="h-4 w-4" /> Log in
+              </Button>
+            </Link>
+            <Link to="/signup" className="flex-1">
+              <Button variant="outline" full>
+                <UserPlus className="h-4 w-4" /> Sign up
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      ) : profile.loading ? (
         <Loading label="Loading your profile…" />
       ) : profile.error || !user ? (
         <ErrorState message={profile.error ?? undefined} onRetry={profile.retry} />
