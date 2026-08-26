@@ -131,10 +131,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
 
   return (
-    <div className="min-h-screen bg-background pb-20 lg:pb-0">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       {/* top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 lg:px-8">
           <button
             className="tap tap-active rounded-lg p-2 hover:bg-secondary lg:hidden"
             aria-label="Open menu"
@@ -188,9 +188,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-7xl">
+      <div className="mx-auto flex max-w-[1440px]">
         {/* desktop sidebar */}
-        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 border-r border-border px-3 py-5 lg:block">
+        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-border px-3 py-5 lg:block">
           <p className="px-3 pb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
             {ROLE_LABEL[role]}
           </p>
@@ -213,7 +213,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:py-7">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">{children}</main>
       </div>
 
       {/* mobile drawer */}
