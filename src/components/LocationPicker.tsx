@@ -26,6 +26,13 @@ export function LocationPicker() {
     setGeoError(null);
   };
 
+  const fullLabel = (name: string, id: string) =>
+    id === "current"
+      ? name
+      : lang === "en"
+        ? `${name}, Maharashtra- India`
+        : `${name}, महाराष्ट्र- भारत`;
+
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
       setGeoError(lang === "en" ? "Geolocation not supported" : "जियोलोकेशन उपलब्ध नहीं है");
@@ -54,15 +61,15 @@ export function LocationPicker() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="tap tap-active flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold hover:bg-secondary sm:px-3 sm:text-sm"
+        className="tap tap-active flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-card hover:bg-secondary"
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <MapPin className="h-4 w-4 shrink-0 text-primary" />
-        <span className="max-w-[7rem] truncate sm:max-w-[10rem]">
-          {lang === "en" ? location.name : location.nameHi}
+        <MapPin className="h-4 w-4 shrink-0 text-foreground" />
+        <span className="max-w-[11rem] truncate sm:max-w-[16rem]">
+          {fullLabel(lang === "en" ? location.name : location.nameHi, location.id)}
         </span>
-        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
       </button>
 
       {open && (
