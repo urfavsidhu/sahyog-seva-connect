@@ -6,6 +6,7 @@ import { Badge, Button, Card, ErrorState, Loading, PageHeader, Section, inr, use
 import { WorkerCard } from "@/components/WorkerCard";
 import { categoryIcon } from "@/lib/icons";
 import { useApp } from "@/lib/app-store";
+import { distanceKm } from "@/lib/locations";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { t, lang } = useApp();
+  const { t, lang, location } = useApp();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const cats = useAsync(getCategories);
@@ -142,7 +143,7 @@ function HomePage() {
       </Section>
 
       {/* top workers */}
-      <Section title="Top rated near you">
+      <Section title={`Top rated near ${lang === "en" ? location.name : location.nameHi}`}>
         {workers.loading ? (
           <Loading label="Finding workers…" />
         ) : workers.error ? (
@@ -150,8 +151,8 @@ function HomePage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {workers.data
-              ?.slice()
-              .sort((a, b) => b.rating - a.rating)
+              ?.map((w) => ({ ...w, distanceKm: distanceKm(location, { lat: w.lat, lng: w.lng }) }))
+              .sort((a, b) => a.distanceKm - b.distanceKm || b.rating - a.rating)
               .slice(0, 6)
               .map((w) => (
                 <WorkerCard key={w.id} worker={w} />
