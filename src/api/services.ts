@@ -1,4 +1,5 @@
 import * as mock from "@/lib/mock-data";
+import { distanceKm as haversineKm } from "@/lib/locations";
 import type {
   AppUser,
   Booking,
@@ -54,19 +55,29 @@ export const searchWorkers = async (params: {
   maxDistance?: number;
   maxPrice?: number;
   minRating?: number;
+  /** Chosen location (from the navbar location picker) that distance is measured from. */
+  origin?: { lat: number; lng: number };
 }) => {
   const list = await getWorkers();
-  return list.filter(
-    (w) =>
-      (!params.q ||
-        w.name.toLowerCase().includes(params.q.toLowerCase()) ||
-        w.category.toLowerCase().includes(params.q.toLowerCase()) ||
-        w.skills.some((s) => s.toLowerCase().includes(params.q!.toLowerCase()))) &&
-      (!params.category || params.category === "all" || w.categoryId === params.category) &&
-      (params.maxDistance === undefined || w.distanceKm <= params.maxDistance) &&
-      (params.maxPrice === undefined || w.pricePerHour <= params.maxPrice) &&
-      (params.minRating === undefined || w.rating >= params.minRating),
-  );
+  // When a location is selected, recompute each worker's distance from that
+  // point instead of relying on the static mock distanceKm.
+  const withDistance = params.origin
+    ? list.map((w) => ({ ...w, distanceKm: haversineKm(params.origin!, { lat: w.lat, lng: w.lng }) }))
+    : list;
+
+  return withDistance
+    .filter(
+      (w) =>
+        (!params.q ||
+          w.name.toLowerCase().includes(params.q.toLowerCase()) ||
+          w.category.toLowerCase().includes(params.q.toLowerCase()) ||
+          w.skills.some((s) => s.toLowerCase().includes(params.q!.toLowerCase()))) &&
+        (!params.category || params.category === "all" || w.categoryId === params.category) &&
+        (params.maxDistance === undefined || w.distanceKm <= params.maxDistance) &&
+        (params.maxPrice === undefined || w.pricePerHour <= params.maxPrice) &&
+        (params.minRating === undefined || w.rating >= params.minRating),
+    )
+    .sort((a, b) => a.distanceKm - b.distanceKm);
 };
 
 /* ---------------- bookings ---------------- */
