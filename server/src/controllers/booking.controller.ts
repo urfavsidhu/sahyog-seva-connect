@@ -9,6 +9,16 @@ export async function getBookings(req: Request, res: Response) {
   res.status(200).json(bookings);
 }
 
+/**
+ * GET /api/bookings/admin — admin only. Every booking, across every
+ * customer, for the admin dashboard (admin/bookings.tsx needs this — the
+ * customer-facing /me route only ever returns the caller's own bookings).
+ */
+export async function getAllBookingsAdmin(req: Request, res: Response) {
+  const bookings = await Booking.find().sort({ createdAt: -1 });
+  res.status(200).json(bookings);
+}
+
 /** GET /api/bookings/:id — booking detail; only the owning customer or assigned worker may view it. */
 export async function getBooking(req: Request, res: Response) {
   const booking = await Booking.findById(req.params.id);
