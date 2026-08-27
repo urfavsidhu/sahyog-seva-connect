@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Role } from "./types";
 import { LOCATIONS, findLocation, type LocationOption } from "./locations";
+import { getToken, setToken as persistToken, clearToken } from "@/api/client";
 
 export type Lang = "en" | "hi";
 
@@ -22,9 +23,19 @@ const dict: Record<string, { en: string; hi: string }> = {
   askSahyog: { en: "Ask Sahyog", hi: "सहयोग से पूछें" },
 };
 
-interface Store {
+/** Shape of the `user` object returned by /auth/login and /auth/signup. */
+export interface CurrentUser {
+  id: string;
+  name: string;
+  email: string;
   role: Role;
-  setRole: (r: Role) => void;
+}
+
+const USER_KEY = "ss.user";
+
+interface Store {
+  /** Always derived from the logged-in user — never settable directly. */
+  role: Role;
   lang: Lang;
   setLang: (l: Lang) => void;
   toggleLang: () => void;
@@ -32,7 +43,9 @@ interface Store {
   unread: number;
   markAllRead: () => void;
   isAuthenticated: boolean;
-  login: () => void;
+  user: CurrentUser | null;
+  /** Called once with the real token + user returned by login/signup. */
+  login: (token: string, user: CurrentUser) => void;
   logout: () => void;
   location: LocationOption;
   setLocation: (l: LocationOption) => void;
@@ -41,25 +54,20 @@ interface Store {
 const AppStoreContext = createContext<Store | null>(null);
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
-  const [role, setRoleState] = useState<Role>("customer");
+  const [user, setUser] = useState<CurrentUser | null>(null);
   const [lang, setLangState] = useState<Lang>("en");
   const [unread, setUnread] = useState(2);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [location, setLocationState] = useState<LocationOption>(
     findLocation("baner") ?? { id: "baner", name: "Baner", nameHi: "बानेर", lat: 18.559, lng: 73.7868 },
   );
 
   useEffect(() => {
-    const r = localStorage.getItem("ss.role") as Role | null;
     const l = localStorage.getItem("ss.lang") as Lang | null;
-    const a = localStorage.getItem("ss.auth");
     const locId = localStorage.getItem("ss.locationId");
     const locName = localStorage.getItem("ss.locationName");
     const locLat = localStorage.getItem("ss.locationLat");
     const locLng = localStorage.getItem("ss.locationLng");
-    if (r) setRoleState(r);
     if (l) setLangState(l);
-    if (a === "1") setIsAuthenticated(true);
     if (locId && locName && locLat && locLng) {
       setLocationState({
         id: locId,
@@ -69,26 +77,40 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         lng: Number(locLng),
       });
     }
+
+    // Restore session: only trust a stored user if we still have a token.
+    const token = getToken();
+    const storedUser = localStorage.getItem(USER_KEY);
+    if (token && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser) as CurrentUser);
+      } catch {
+        clearToken();
+        localStorage.removeItem(USER_KEY);
+      }
+    } else {
+      clearToken();
+      localStorage.removeItem(USER_KEY);
+    }
   }, []);
 
-  const setRole = useCallback((r: Role) => {
-    setRoleState(r);
-    localStorage.setItem("ss.role", r);
-  }, []);
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     localStorage.setItem("ss.lang", l);
   }, []);
-  const login = useCallback(() => {
-    setIsAuthenticated(true);
-    localStorage.setItem("ss.auth", "1");
+
+  const login = useCallback((token: string, nextUser: CurrentUser) => {
+    persistToken(token);
+    localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    setUser(nextUser);
   }, []);
+
   const logout = useCallback(() => {
-    setIsAuthenticated(false);
-    localStorage.removeItem("ss.auth");
-    localStorage.removeItem("ss.role");
-    setRoleState("customer");
+    clearToken();
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
   }, []);
+
   const setLocation = useCallback((l: LocationOption) => {
     setLocationState(l);
     localStorage.setItem("ss.locationId", l.id);
@@ -99,21 +121,21 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Store>(
     () => ({
-      role,
-      setRole,
+      role: user?.role ?? "customer",
       lang,
       setLang,
       toggleLang: () => setLang(lang === "en" ? "hi" : "en"),
       t: (key: string) => dict[key]?.[lang] ?? key,
       unread,
       markAllRead: () => setUnread(0),
-      isAuthenticated,
+      isAuthenticated: !!user,
+      user,
       login,
       logout,
       location,
       setLocation,
     }),
-    [role, lang, unread, isAuthenticated, setRole, setLang, login, logout, location, setLocation],
+    [user, lang, unread, login, logout, location, setLang, setLocation],
   );
 
   return <AppStoreContext.Provider value={value}>{children}</AppStoreContext.Provider>;
