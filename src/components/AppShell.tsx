@@ -28,6 +28,7 @@ import { useApp } from "@/lib/app-store";
 import type { Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Chatbot } from "./Chatbot";
+import { LocationPicker } from "./LocationPicker";
 
 interface NavItem {
   to: string;
@@ -134,7 +135,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background pb-48 lg:pb-0">
       {/* top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur">
-        <div className="flex h-16 w-full items-center gap-3 px-4 lg:px-8">
+        <div className="relative flex h-16 w-full items-center gap-3 px-4 lg:px-8">
           <button
             className="tap tap-active rounded-lg p-2 hover:bg-secondary lg:hidden"
             aria-label="Open menu"
@@ -143,6 +144,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Menu className="h-5 w-5" />
           </button>
           <Brand />
+          <div className="left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:absolute sm:block">
+            <LocationPicker />
+          </div>
           <div className="ml-auto hidden md:block">
             <RoleSwitcher />
           </div>
@@ -236,6 +240,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
             </div>
             <RoleSwitcher onNavigate={() => setOpen(false)} />
+            <div className="sm:hidden">
+              <LocationPicker />
+            </div>
             {isAuthenticated ? (
               <button
                 onClick={() => {
