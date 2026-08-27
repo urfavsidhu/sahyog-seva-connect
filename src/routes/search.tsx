@@ -15,6 +15,7 @@ import {
 } from "@/components/kit";
 import { MapView } from "@/components/MapView";
 import { WorkerCard } from "@/components/WorkerCard";
+import { useApp } from "@/lib/app-store";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({
@@ -43,6 +44,7 @@ export const Route = createFileRoute("/search")({
 function SearchPage() {
   const params = Route.useSearch();
   const navigate = useNavigate({ from: "/search" });
+  const { location, lang } = useApp();
   const [q, setQ] = useState(params.q ?? "");
   const [category, setCategory] = useState(params.category ?? "all");
   const [maxDistance, setMaxDistance] = useState(10);
@@ -53,15 +55,29 @@ function SearchPage() {
 
   const cats = useAsync(getCategories);
   const results = useAsync(
-    () => searchWorkers({ q, category, maxDistance, maxPrice, minRating }),
-    [q, category, maxDistance, maxPrice, minRating],
+    () =>
+      searchWorkers({
+        q,
+        category,
+        maxDistance,
+        maxPrice,
+        minRating,
+        origin: { lat: location.lat, lng: location.lng },
+      }),
+    [q, category, maxDistance, maxPrice, minRating, location.id, location.lat, location.lng],
   );
+
+  const locationLabel = lang === "en" ? location.name : location.nameHi;
 
   return (
     <div>
       <PageHeader
         title="Find a worker"
-        subtitle={params.urgent ? "Urgent bookings — available today" : "Verified cooperative members near you"}
+        subtitle={
+          params.urgent
+            ? "Urgent bookings — available today"
+            : `Verified cooperative members near ${locationLabel}`
+        }
         action={
           <div className="flex gap-1 rounded-xl bg-secondary p-1">
             {(["list", "map"] as const).map((v) => (
