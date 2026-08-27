@@ -154,7 +154,7 @@ export function Footer() {
           </p>
           <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5" /> Pune, Maharashtra, India
+              <MapPin className="h-3.5 w-3.5" /> PSIT, Kanpur, India
             </span>
             <span className="flex items-center gap-1.5">
               <Mail className="h-3.5 w-3.5" /> support@sahyogseva.coop
