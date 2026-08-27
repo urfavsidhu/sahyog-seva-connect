@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Lock, Mail, MapPin, Phone, User } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { ApiError } from "@/api/client";
 import { signup as apiSignup } from "@/api/services";
 import { AuthCard } from "@/components/AuthCard";
 import { Button } from "@/components/kit";
@@ -30,7 +31,7 @@ const ROLE_HOME: Record<Role, string> = {
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { setRole, login } = useApp();
+  const { login } = useApp();
 
   const [role, setSelectedRole] = useState<Role>("customer");
   const [name, setName] = useState("");
@@ -56,12 +57,13 @@ function SignupPage() {
     setError(null);
     setLoading(true);
     try {
-      await apiSignup({ name, email, phone, city, password, role });
-      setRole(role);
-      login();
-      navigate({ to: ROLE_HOME[role] });
-    } catch {
-      setError("Couldn't create your account. Please try again.");
+      const { token, user } = await apiSignup({ name, email, phone, city, password, role });
+      login(token, user);
+      // Use the role the server actually assigned (e.g. ADMIN_EMAIL override),
+      // not just the one the person picked in the form above.
+      navigate({ to: ROLE_HOME[user.role] });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Couldn't create your account. Please try again.");
     } finally {
       setLoading(false);
     }
