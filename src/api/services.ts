@@ -1,5 +1,3 @@
-import * as mock from "@/lib/mock-data";
-import { distanceKm as haversineKm } from "@/lib/locations";
 import type {
   AppUser,
   Booking,
@@ -16,8 +14,13 @@ import type {
 import { request } from "./client";
 
 /* ---------------- auth ---------------- */
+export interface AuthResponse {
+  token: string;
+  user: { id: string; name: string; email: string; role: Role };
+}
+
 export const login = (payload: { email: string; password: string }) =>
-  request<{ token: string }>("/auth/login", { token: "mock-jwt-token" });
+  request<AuthResponse>("/auth/login", { method: "POST", body: payload });
 
 export const signup = (payload: {
   name: string;
@@ -26,30 +29,26 @@ export const signup = (payload: {
   city?: string;
   password: string;
   role: Role;
-}) => request<{ token: string }>("/auth/signup", { token: "mock-jwt-token" });
+}) => request<AuthResponse>("/auth/signup", { method: "POST", body: payload });
 
 /* ---------------- catalogue ---------------- */
-export const getCategories = () => request<ServiceCategory[]>("/categories", mock.categories);
+export const getCategories = () => request<ServiceCategory[]>("/categories");
 
-export const getWorkers = () => request<Worker[]>("/workers", mock.workers);
+export const getWorkers = () => request<Worker[]>("/workers");
 
-export const getWorker = async (id: string) => {
-  const list = await getWorkers();
-  return list.find((w) => w.id === id) ?? null;
-};
+// Admin-only — every worker regardless of status (verification queue).
+// admin/workers.tsx currently imports `getWorkers` instead of this; it
+// needs to switch over for pending/suspended workers to actually show up.
+export const getAllWorkersAdmin = () => request<Worker[]>("/workers/admin");
 
-// Demo session: the "logged in" worker for all /pro/* screens.
-export const CURRENT_WORKER_ID = "w1";
-export const getCurrentWorker = async () => {
-  const list = await getWorkers();
-  return list.find((w) => w.id === CURRENT_WORKER_ID) ?? list[0] ?? null;
-};
-export const getWorkerBookings = async () => {
-  const list = await getBookings();
-  return list.filter((b) => b.workerId === CURRENT_WORKER_ID);
-};
+export const getWorker = (id: string) => request<Worker>(`/workers/${id}`);
 
-export const searchWorkers = async (params: {
+export const getCurrentWorker = () => request<Worker>("/workers/me");
+
+export const getWorkerBookings = async () =>
+  (await request<unknown[]>("/workers/me/bookings")).map(mapBooking);
+
+export const searchWorkers = (params: {
   q?: string;
   category?: string;
   maxDistance?: number;
@@ -58,68 +57,129 @@ export const searchWorkers = async (params: {
   /** Chosen location (from the navbar location picker) that distance is measured from. */
   origin?: { lat: number; lng: number };
 }) => {
-  const list = await getWorkers();
-  // When a location is selected, recompute each worker's distance from that
-  // point instead of relying on the static mock distanceKm.
-  const withDistance = params.origin
-    ? list.map((w) => ({ ...w, distanceKm: haversineKm(params.origin!, { lat: w.lat, lng: w.lng }) }))
-    : list;
-
-  return withDistance
-    .filter(
-      (w) =>
-        (!params.q ||
-          w.name.toLowerCase().includes(params.q.toLowerCase()) ||
-          w.category.toLowerCase().includes(params.q.toLowerCase()) ||
-          w.skills.some((s) => s.toLowerCase().includes(params.q!.toLowerCase()))) &&
-        (!params.category || params.category === "all" || w.categoryId === params.category) &&
-        (params.maxDistance === undefined || w.distanceKm <= params.maxDistance) &&
-        (params.maxPrice === undefined || w.pricePerHour <= params.maxPrice) &&
-        (params.minRating === undefined || w.rating >= params.minRating),
-    )
-    .sort((a, b) => a.distanceKm - b.distanceKm);
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.category) qs.set("category", params.category);
+  if (params.maxDistance !== undefined) qs.set("maxDistance", String(params.maxDistance));
+  if (params.maxPrice !== undefined) qs.set("maxPrice", String(params.maxPrice));
+  if (params.minRating !== undefined) qs.set("minRating", String(params.minRating));
+  if (params.origin) {
+    qs.set("lat", String(params.origin.lat));
+    qs.set("lng", String(params.origin.lng));
+  }
+  const query = qs.toString();
+  return request<Worker[]>(`/workers/search${query ? `?${query}` : ""}`);
 };
 
 /* ---------------- bookings ---------------- */
-export const getBookings = () => request<Booking[]>("/bookings", mock.bookings);
-export const getBooking = async (id: string) =>
-  (await getBookings()).find((b) => b.id === id) ?? null;
-export const getIncomingRequests = () =>
-  request<Booking[]>("/worker/requests", mock.incomingRequests);
-export const createBooking = (payload: Partial<Booking>) =>
-  request<Partial<Booking> & { id: string; otp: string }>("/bookings", {
-    ...payload,
-    id: `BK-${Math.floor(2500 + Math.random() * 400)}`,
-    otp: String(Math.floor(1000 + Math.random() * 9000)),
-  });
-export const updateBookingStatus = (id: string, status: Booking["status"]) =>
-  request("/bookings/status", { id, status });
+// Backend stores the worker reference as `worker` (Mongo ObjectId); the
+// frontend's Booking type expects `workerId`. This adapter bridges that.
+function mapBooking(raw: any): Booking {
+  return { ...raw, id: raw.id ?? raw._id, workerId: raw.worker };
+}
+
+export const getBookings = async () => (await request<unknown[]>("/bookings/me")).map(mapBooking);
+
+// Admin-only — every booking across every customer. admin/bookings.tsx and
+// admin/index.tsx currently import `getBookings` instead of this; they
+// need to switch over to see more than just the admin's own bookings.
+export const getAllBookingsAdmin = async () =>
+  (await request<unknown[]>("/bookings/admin")).map(mapBooking);
+
+export const getBooking = async (id: string) => mapBooking(await request<unknown>(`/bookings/${id}`));
+
+export const getIncomingRequests = async () =>
+  (await request<unknown[]>("/bookings/requests")).map(mapBooking);
+
+export const createBooking = async (payload: Partial<Booking> & { workerId: string }) =>
+  mapBooking(await request<unknown>("/bookings", { method: "POST", body: payload }));
+
+export const updateBookingStatus = (id: string, status: Booking["status"], otp?: string) =>
+  request(`/bookings/${id}/status`, { method: "PATCH", body: { status, otp } });
+
 export const submitReview = (payload: { bookingId: string; rating: number; comment: string }) =>
-  request("/reviews", payload);
+  request<Review>("/reviews", { method: "POST", body: payload });
 
 /* ---------------- people ---------------- */
-export const getReviews = () => request<Review[]>("/reviews", mock.reviews);
-export const getMessages = () => request<Message[]>("/messages", mock.messages);
-export const getMembers = () => request<Member[]>("/coop/members", mock.members);
-export const getCooperatives = () => request<Cooperative[]>("/cooperatives", mock.cooperatives);
-export const getUsers = () => request<AppUser[]>("/users", mock.users);
-export const getCurrentUser = async () => {
-  const list = await getUsers();
-  return list.find((u) => u.id === "u1") ?? list[0] ?? null;
-};
+export const getReviews = (workerId?: string) =>
+  request<Review[]>(`/reviews${workerId ? `?workerId=${workerId}` : ""}`);
+
+// NOTE: chat.tsx currently calls getMessages() with no bookingId and
+// simulates the rest of the thread locally (fake auto-replies) — it isn't
+// wired to real per-booking chat yet. Kept optional here, returning an
+// empty thread when no bookingId is passed, so nothing throws until
+// chat.tsx is updated to pass the active conversation's bookingId.
+export const getMessages = (bookingId?: string) =>
+  bookingId ? request<Message[]>(`/messages/${bookingId}`) : Promise.resolve([] as Message[]);
+
+export const sendMessage = (bookingId: string, text: string) =>
+  request<Message>(`/messages/${bookingId}`, { method: "POST", body: { text } });
+
+export const getMembers = () => request<Member[]>("/coop/members");
+
+export const getCooperatives = () => request<Cooperative[]>("/coop");
+
+export const getUsers = () => request<AppUser[]>("/users");
+
+export const getCurrentUser = () => request<AppUser>("/users/me");
+
 export const updateProfile = (payload: Partial<AppUser>) =>
-  request<Partial<AppUser>>("/profile", payload);
-export const getTransactions = () => request<Transaction[]>("/transactions", mock.transactions);
-export const getDisputes = () => request<Dispute[]>("/disputes", mock.disputes);
-export const getNotifications = () => request("/notifications", mock.notifications);
+  request<AppUser>("/users/me", { method: "PATCH", body: payload });
+
+export const getTransactions = () => request<Transaction[]>("/analytics/transactions");
+
+export const getDisputes = () => request<Dispute[]>("/analytics/disputes");
+
+export const getNotifications = () => request("/notifications");
 
 /* ---------------- analytics ---------------- */
+// NOTE: backend returns { week, month, total } as totals, not the
+// day/week-by-day chart series pro/earnings.tsx expects (mock.earningsWeek/
+// earningsMonth are arrays of { label, earnings, jobs }). Wired through
+// as-is for now — the earnings chart will need analytics.controller.ts
+// updated to return a real per-day/per-week breakdown, and this function
+// updated to match, before that page renders correctly.
 export const getWorkerEarnings = () =>
-  request("/worker/earnings", { week: mock.earningsWeek, month: mock.earningsMonth });
-export const getCoopAnalytics = () =>
-  request("/coop/analytics", {
-    jobsOverTime: mock.jobsOverTime,
-    categoryBreakdown: mock.categoryBreakdown,
-  });
-export const getPlatformAnalytics = () =>
-  request("/admin/analytics", { trend: mock.platformTrend, areaDemand: mock.areaDemand });
+  request<{ week: number; month: number; total: number }>("/analytics/worker");
+
+interface DateValue {
+  date: string;
+  value: number;
+}
+
+export const getCoopAnalytics = async () => {
+  const data = await request<{
+    jobsOverTime: DateValue[];
+    categoryBreakdown: { name: string; value: number }[];
+  }>("/coop/analytics");
+  return {
+    // NOTE: backend's jobsOverTime currently counts jobs, not revenue, but
+    // the chart in coop/analytics.tsx reads a "revenue" field. Renamed
+    // honestly to `jobs` here — the chart will need a real per-date revenue
+    // aggregation added server-side to show correct figures.
+    jobsOverTime: data.jobsOverTime.map((d) => ({ label: d.date, jobs: d.value })),
+    categoryBreakdown: data.categoryBreakdown,
+  };
+};
+
+export const getPlatformAnalytics = async () => {
+  const data = await request<{
+    trend: DateValue[];
+    areaDemand: { name: string; value: number }[];
+  }>("/analytics/platform");
+  return {
+    trend: data.trend.map((d) => ({ label: d.date, revenue: d.value })),
+    // NOTE: admin/demand.tsx expects { area, lat, lng, top, requests, unmet }
+    // per area for its map + table. Backend's areaDemand is currently just
+    // a { name, value } count by category, not by geographic area — this
+    // page needs a proper area-based demand endpoint before it'll work.
+    areaDemand: data.areaDemand as unknown as {
+      area: string;
+      lat: number;
+      lng: number;
+      top: string;
+      requests: number;
+      unmet: number;
+    }[],
+  };
+};
