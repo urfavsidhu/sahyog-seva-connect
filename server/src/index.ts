@@ -5,15 +5,15 @@ import { connectDB } from "./config/db";
 import { notFound, errorHandler } from "./middleware/error.middleware";
 
 import authRoutes from "./routes/auth.routes";
-// More route imports will be added here as each module is built:
-// import workerRoutes from "./routes/worker.routes";
-// import bookingRoutes from "./routes/booking.routes";
-// import reviewRoutes from "./routes/review.routes";
-// import coopRoutes from "./routes/coop.routes";
-// import userRoutes from "./routes/user.routes";
-// import notificationRoutes from "./routes/notification.routes";
-// import messageRoutes from "./routes/message.routes";
-// import analyticsRoutes from "./routes/analytics.routes";
+import categoryRoutes from "./routes/category.routes";
+import workerRoutes from "./routes/worker.routes";
+import bookingRoutes from "./routes/booking.routes";
+import reviewRoutes from "./routes/review.routes";
+import coopRoutes from "./routes/coop.routes";
+import userRoutes from "./routes/user.routes";
+import notificationRoutes from "./routes/notification.routes";
+import messageRoutes from "./routes/message.routes";
+import analyticsRoutes from "./routes/analytics.routes";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,14 +26,15 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-// app.use("/api/workers", workerRoutes);
-// app.use("/api/bookings", bookingRoutes);
-// app.use("/api/reviews", reviewRoutes);
-// app.use("/api/coop", coopRoutes);
-// app.use("/api/users", userRoutes);
-// app.use("/api/notifications", notificationRoutes);
-// app.use("/api/messages", messageRoutes);
-// app.use("/api/admin", analyticsRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/workers", workerRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/coop", coopRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
