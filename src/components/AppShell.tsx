@@ -99,29 +99,21 @@ function Brand() {
   );
 }
 
-function RoleSwitcher({ onNavigate }: { onNavigate?: () => void }) {
-  const { role, setRole } = useApp();
+/**
+ * Read-only role pill — links to the logged-in user's own dashboard.
+ * Role now comes solely from the JWT returned at login, so this no longer
+ * lets anyone click their way into another role.
+ */
+function RoleBadge() {
+  const { role, isAuthenticated } = useApp();
+  if (!isAuthenticated) return null;
   return (
-    <div className="flex flex-wrap gap-1 rounded-xl bg-secondary p-1">
-      {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
-        <Link
-          key={r}
-          to={ROLE_HOME[r]}
-          onClick={() => {
-            setRole(r);
-            onNavigate?.();
-          }}
-          className={cn(
-            "tap rounded-lg px-2.5 py-1.5 text-xs font-semibold",
-            role === r
-              ? "bg-card text-primary shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {ROLE_LABEL[r]}
-        </Link>
-      ))}
-    </div>
+    <Link
+      to={ROLE_HOME[role]}
+      className="tap rounded-lg bg-secondary px-2.5 py-1.5 text-xs font-semibold text-primary"
+    >
+      {ROLE_LABEL[role]}
+    </Link>
   );
 }
 
@@ -149,7 +141,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <LocationPicker />
           </div>
           <div className="ml-auto hidden md:block">
-            <RoleSwitcher />
+            <RoleBadge />
           </div>
           <button
             onClick={toggleLang}
@@ -242,7 +234,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <RoleSwitcher onNavigate={() => setOpen(false)} />
+            <RoleBadge />
             <div className="sm:hidden">
               <LocationPicker />
             </div>
