@@ -1,12 +1,39 @@
 import { Request, Response } from "express";
-import { Worker } from "../models/Worker.model";
+import { Worker, type IWorker } from "../models/Worker.model";
 import { Booking } from "../models/Booking.model";
 import { distanceKm } from "../utils/distance";
 
-/** GET /api/workers — only "active" (verified & approved) workers are public. */
+/**
+ * Frontend's Worker type (src/lib/types.ts) expects `name` and `photo`
+ * directly on the worker object, but those actually live on the linked
+ * User document. This flattens a populated Worker doc into that shape.
+ */
+function toClientWorker(worker: IWorker) {
+  const obj = worker.toObject();
+  const user = obj.user as any;
+  return {
+    ...obj,
+    id: obj._id,
+    name: user?.name ?? "Worker",
+    photo: user?.photo ?? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user?.name ?? "W")}`,
+    user: undefined,
+  };
+}
+
+/** GET /api/workers — public/customer view: only "active" workers. */
 export async function getWorkers(req: Request, res: Response) {
   const workers = await Worker.find({ status: "active" }).populate("user", "name email phone");
-  res.status(200).json(workers);
+  res.status(200).json(workers.map(toClientWorker));
+}
+
+/**
+ * GET /api/workers/admin — admin only. Every status, so pending document
+ * verification and suspended workers are visible for moderation
+ * (admin/workers.tsx needs this — the public list only shows "active").
+ */
+export async function getAllWorkersAdmin(req: Request, res: Response) {
+  const workers = await Worker.find().populate("user", "name email phone");
+  res.status(200).json(workers.map(toClientWorker));
 }
 
 /** GET /api/workers/:id */
@@ -15,7 +42,7 @@ export async function getWorker(req: Request, res: Response) {
   if (!worker) {
     return res.status(404).json({ message: "Worker not found" });
   }
-  res.status(200).json(worker);
+  res.status(200).json(toClientWorker(worker));
 }
 
 /**
@@ -51,14 +78,14 @@ export async function searchWorkers(req: Request, res: Response) {
     filter.$or = [{ category: regex }, { skills: regex }];
   }
 
-  let workers = await Worker.find(filter).populate("user", "name");
+  const workers = await Worker.find(filter).populate("user", "name email phone");
 
   const origin = lat && lng ? { lat: Number(lat), lng: Number(lng) } : null;
   let results = workers.map((w) => {
-    const obj = w.toObject();
+    const client = toClientWorker(w);
     return origin
-      ? { ...obj, distanceKm: distanceKm(origin, { lat: w.lat, lng: w.lng }) }
-      : obj;
+      ? { ...client, distanceKm: distanceKm(origin, { lat: w.lat, lng: w.lng }) }
+      : client;
   });
 
   if (origin && maxDistance !== undefined) {
@@ -80,7 +107,7 @@ export async function getCurrentWorker(req: Request, res: Response) {
   if (!worker) {
     return res.status(404).json({ message: "Worker profile not found" });
   }
-  res.status(200).json(worker);
+  res.status(200).json(toClientWorker(worker));
 }
 
 /** GET /api/workers/me/bookings — jobs assigned to the logged-in worker. */
@@ -98,9 +125,9 @@ export async function updateWorkerProfile(req: Request, res: Response) {
   const worker = await Worker.findOneAndUpdate({ user: req.user!.userId }, req.body, {
     new: true,
     runValidators: true,
-  });
+  }).populate("user", "name email phone");
   if (!worker) {
     return res.status(404).json({ message: "Worker profile not found" });
   }
-  res.status(200).json(worker);
+  res.status(200).json(toClientWorker(worker));
 }
