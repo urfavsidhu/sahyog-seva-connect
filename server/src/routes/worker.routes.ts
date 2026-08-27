@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getWorkers,
+  getAllWorkersAdmin,
   getWorker,
   searchWorkers,
   getCurrentWorker,
@@ -14,6 +15,9 @@ const router = Router();
 // Public — anyone (even logged out) can browse/search workers.
 router.get("/search", searchWorkers);
 router.get("/", getWorkers);
+
+// Admin only — every worker regardless of status (verification queue).
+router.get("/admin", protect, requireRole("admin"), getAllWorkersAdmin);
 
 // Protected — the logged-in worker's own profile/dashboard.
 // Mounted before "/:id" so "me" is never treated as an ObjectId param.
