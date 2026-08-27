@@ -28,6 +28,7 @@ import { useApp } from "@/lib/app-store";
 import type { Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Chatbot } from "./Chatbot";
+import { Footer } from "./Footer";
 import { LocationPicker } from "./LocationPicker";
 
 interface NavItem {
@@ -219,6 +220,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">{children}</main>
       </div>
+
+      <Footer />
 
       {/* mobile drawer */}
       {open && (
