@@ -13,17 +13,36 @@ export async function getWorkerEarnings(req: Request, res: Response) {
   }
 
   const bookings = await Booking.find({ worker: worker._id, status: "completed" });
-
   const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const monthAgo = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const week = bookings
-    .filter((b) => b.updatedAt >= weekAgo)
-    .reduce((sum, b) => sum + b.price, 0);
-  const month = bookings
-    .filter((b) => b.updatedAt >= monthAgo)
-    .reduce((sum, b) => sum + b.price, 0);
+  const week = Array.from({ length: 7 }).map((_, i) => {
+    const day = new Date(now);
+    day.setDate(day.getDate() - (6 - i));
+    const key = day.toISOString().slice(0, 10);
+    const dayBookings = bookings.filter(
+      (b) => b.updatedAt.toISOString().slice(0, 10) === key,
+    );
+    return {
+      label: day.toLocaleDateString("en-US", { weekday: "short" }),
+      earnings: dayBookings.reduce((sum, b) => sum + b.price, 0),
+      jobs: dayBookings.length,
+    };
+  });
+
+  const month = Array.from({ length: 4 }).map((_, i) => {
+    const weekEnd = new Date(now);
+    weekEnd.setDate(weekEnd.getDate() - (3 - i) * 7);
+    const weekStart = new Date(weekEnd);
+    weekStart.setDate(weekStart.getDate() - 6);
+    const weekBookings = bookings.filter(
+      (b) => b.updatedAt >= weekStart && b.updatedAt <= weekEnd,
+    );
+    return {
+      label: `Week ${i + 1}`,
+      earnings: weekBookings.reduce((sum, b) => sum + b.price, 0),
+      jobs: weekBookings.length,
+    };
+  });
 
   res.status(200).json({ week, month, total: worker.earningsThisMonth });
 }
