@@ -5,6 +5,30 @@ import { Cooperative } from "../models/Cooperative.model";
 import { Transaction } from "../models/Transaction.model";
 import { Dispute } from "../models/Dispute.model";
 
+const AREAS = [
+  { area: "Baner", lat: 18.559, lng: 73.7868 },
+  { area: "Kothrud", lat: 18.5074, lng: 73.8077 },
+  { area: "Viman Nagar", lat: 18.5679, lng: 73.9143 },
+  { area: "Hadapsar", lat: 18.5089, lng: 73.926 },
+  { area: "Kharadi", lat: 18.5515, lng: 73.947 },
+  { area: "Shivaji Nagar", lat: 18.5304, lng: 73.8467 },
+  { area: "Hinjewadi", lat: 18.5975, lng: 73.7623 },
+  { area: "Wakad", lat: 18.5989, lng: 73.7645 },
+];
+
+function nearestArea(lat: number, lng: number) {
+  let best = AREAS[0];
+  let bestDist = Infinity;
+  for (const a of AREAS) {
+    const d = (a.lat - lat) ** 2 + (a.lng - lng) ** 2;
+    if (d < bestDist) {
+      bestDist = d;
+      best = a;
+    }
+  }
+  return best.area;
+}
+
 /** GET /api/analytics/worker — logged-in worker's earnings breakdown. */
 export async function getWorkerEarnings(req: Request, res: Response) {
   const worker = await Worker.findOne({ user: req.user!.userId });
@@ -56,7 +80,7 @@ export async function getCoopAnalytics(req: Request, res: Response) {
 
   const transactions = await Transaction.find({ cooperative: coop._id }).sort({ date: 1 });
 
-  const jobsOverTime = groupByDate(transactions, (t) => t.date, () => 1);
+  const jobsOverTime = groupByDate(transactions, (t) => t.date, (t) => t.amount);
   const categoryBreakdown = groupByKey(transactions, (t) => t.service, (t) => t.amount);
 
   res.status(200).json({ jobsOverTime, categoryBreakdown });
@@ -65,14 +89,40 @@ export async function getCoopAnalytics(req: Request, res: Response) {
 /** GET /api/analytics/platform — admin-only, platform-wide trends. */
 export async function getPlatformAnalytics(req: Request, res: Response) {
   const transactions = await Transaction.find().sort({ date: 1 });
-  const workers = await Worker.find();
-
   const trend = groupByDate(transactions, (t) => t.date, (t) => t.amount);
-  const areaDemand = groupByKey(
-    workers,
-    (w) => w.categoryId,
-    () => 1,
-  );
+
+  const bookings = await Booking.find();
+  const grouped = new Map
+    string,
+    { requests: number; unmet: number; services: Map<string, number> }
+  >();
+
+  for (const b of bookings) {
+    const area = nearestArea(b.lat, b.lng);
+    if (!grouped.has(area)) {
+      grouped.set(area, { requests: 0, unmet: 0, services: new Map() });
+    }
+    const g = grouped.get(area)!;
+    g.requests += 1;
+    if (b.status === "cancelled" || b.status === "pending") g.unmet += 1;
+    g.services.set(b.service, (g.services.get(b.service) ?? 0) + 1);
+  }
+
+  const areaDemand = AREAS.map(({ area, lat, lng }) => {
+    const g = grouped.get(area);
+    if (!g || g.requests === 0) {
+      return { area, lat, lng, top: "—", requests: 0, unmet: 0 };
+    }
+    const top = [...g.services.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    return {
+      area,
+      lat,
+      lng,
+      top,
+      requests: g.requests,
+      unmet: Math.round((g.unmet / g.requests) * 100),
+    };
+  });
 
   res.status(200).json({ trend, areaDemand });
 }
