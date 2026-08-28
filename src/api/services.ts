@@ -144,7 +144,7 @@ export const getCoopAnalytics = async () => {
     categoryBreakdown: { name: string; value: number }[];
   }>("/coop/analytics");
   return {
-    jobsOverTime: data.jobsOverTime.map((d) => ({ label: d.date, jobs: d.value })),
+    jobsOverTime: data.jobsOverTime.map((d) => ({ label: d.date, revenue: d.value })),
     categoryBreakdown: data.categoryBreakdown,
   };
 };
@@ -152,17 +152,17 @@ export const getCoopAnalytics = async () => {
 export const getPlatformAnalytics = async () => {
   const data = await request<{
     trend: DateValue[];
-    areaDemand: { name: string; value: number }[];
-  }>("/analytics/platform");
-  return {
-    trend: data.trend.map((d) => ({ label: d.date, revenue: d.value })),
-    areaDemand: data.areaDemand as unknown as {
+    areaDemand: {
       area: string;
       lat: number;
       lng: number;
       top: string;
       requests: number;
       unmet: number;
-    }[],
+    }[];
+  }>("/analytics/platform");
+  return {
+    trend: data.trend.map((d) => ({ label: d.date, revenue: d.value })),
+    areaDemand: data.areaDemand,
   };
 };
