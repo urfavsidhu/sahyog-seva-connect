@@ -130,7 +130,7 @@ export const getTransactions = () => request<Transaction[]>("/analytics/transact
 
 export const getDisputes = () => request<Dispute[]>("/analytics/disputes");
 
-export const getNotifications = () => request("/notifications");
+export const getNotifications = () => request<AppNotification[]>("/notifications");
 
 /* ---------------- analytics ---------------- */
 // NOTE: backend returns { week, month, total } as totals, not the
