@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, FileText, X } from "lucide-react";
-import { getWorkers } from "@/api/services";
+import { getAllWorkersAdmin } from "@/api/services";
 import {
   Badge,
   Card,
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/admin/workers")({
 });
 
 function AdminWorkersPage() {
-  const workers = useAsync(getWorkers);
+  const workers = useAsync(getAllWorkersAdmin);
 
   if (workers.loading) return <Loading label="Loading workers…" />;
   if (workers.error) return <ErrorState message={workers.error} onRetry={workers.retry} />;
