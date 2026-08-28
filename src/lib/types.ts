@@ -133,3 +133,12 @@ export interface AppUser {
   status: "active" | "suspended";
   bookings: number;
 }
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  status: string;
+  bookingId: string;
+  date: string;
+}
