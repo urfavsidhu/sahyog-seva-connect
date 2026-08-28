@@ -1,5 +1,6 @@
 import type {
   AppUser,
+  AppNotification,
   Booking,
   Cooperative,
   Dispute,
